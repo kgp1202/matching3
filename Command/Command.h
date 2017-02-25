@@ -1,4 +1,5 @@
 #pragma once
+#include "BasicModule/MLog.h"
 
 class DataStructure;
 

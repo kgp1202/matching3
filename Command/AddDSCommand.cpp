@@ -3,7 +3,6 @@
 #include "Command/AddDSCommand.h"
 #include "DataStructure/DataStructure.h"
 #include "DataStructure/Person.h"
-#include "BasicModule/MLog.h"
 #include "boost/shared_array.hpp"
 #include <unistd.h>
 
