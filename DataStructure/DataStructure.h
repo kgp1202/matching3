@@ -2,21 +2,28 @@
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <vector>
-#include <MiniDataStructure>
+#include "MiniDataStructure.h"
 
 class Person;
+class CommandQueue;
 
 class DataStructre {
 public:
-	bool add(int key, boost::shared_ptr<Person>);	//add후에 check	
-	bool wake(boost::shared_ptr<std::vector<int> > updateKey);		
-							//CheckDSCommand 이후에 _waitAdvantage를
-							//update시켜준다.
+	explicit DataStructure(CommandQueue* commandQueue);
+	bool add(int key, boost::shared_ptr<Person>);		//AddDSCommand
+	inline std::vector<int> checkMDS();			//CheckMDSCommand
+	MiniDataStructure* getMDS();
+	boost::shared_ptr<Person> getPerson(int key);
 private:
 	std::map<int, boost::shared_ptr<Person> > _map;
 	pthread_mutex_t _mutex;
-	MiniDataStructure _mds;
+	MiniDataStructure* _mds;			//Not Smart Ptr
+	CommandQueue* _commandQueue;			//Not Smart Ptr 
+							//You should DELETE!!
 	
+	bool wake(const std::vector<int>& updateKey);		
+							//CheckMDSCommand 이후에 _waitAdvantage를
+							//update시켜준다.
 	
 	bool isPossible(int key);			//key값을 가진 Person이 매칭이 가능한지
 							//확인 시켜주고 이에 맞는 매칭 정보를
