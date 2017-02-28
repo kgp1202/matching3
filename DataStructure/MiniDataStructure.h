@@ -8,10 +8,13 @@
 class MiniDataStructure{
 public:
 	explicit MiniDataStructure();
-	void add(int priority);
-	void remove(int* keys);
+
+	inline void add(int socket, MiniPerson::DSIterator iter);
+
+	inline void remove(int socket);
+	
 	boost::shared_ptr<std::vector<MiniPerson> > check();
 private:
-	boost::shared_ptr<MiniPerson> _array[MINI_DATASTRUCTURE_SIZE];
-	pthread_mutex_t _mutex;
+	vector<MiniPerson> _vector;
+	pthread_mutex_t* _mutex;
 };

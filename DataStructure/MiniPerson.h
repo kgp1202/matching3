@@ -1,14 +1,27 @@
 //MiniPerson.h
 #include "BasicModule/MMemoryPool.h"
+#include "boost/shared_ptr.hpp"
 
-//이 객체는 DataStructure's mutex에 의해 Thread safe하다.
+class Person;
+
+//이 객체는 MiniDataStructure's mutex에 의해 Thread safe하다.
+//즉 MiniDataStructure 내부에서만 생성해야 한다.
 class MiniPerson : public MMemoryPool<MiniPerson> {
 public:
-	explicit MiniPerson(int priority, int startTime);	
-	int getPriority();
-	int getSocket();
+	typedef boost::set<shared_ptr<Person> >::iterator DSIterator;
+	explicit MiniPerson(DSIterator iter);	
+	DSIterator getIter();
+	void setValue(DSIterator iter);		//_iter과 _startTime 초기화
+						//초기화 전에 비어있는지 확인
+	
+	void clearValue();			//값을 초기화 시켜준다.
+
+	bool isEmpty();				//비어있는지 확인
+
+	bool timeCheck();			//Time Check 해준다
+						//시간이 경과되어져 있으면 true
+						//아니면 false를 리턴.
 private:
-	int _socket;
-	int _priority;
+	DSIterator _iter;
 	int _startTime;
 };

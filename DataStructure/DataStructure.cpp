@@ -12,8 +12,8 @@ DataStructure::DataStructure(CommandQueue* commandQueue)
 	
 	//Map -1과 MAX값에 Padding
 	boost::shared_ptr<Person> nullPtr;
-	_map.insert(std::pair<int, boost::shared_ptr<Person> >(-1, nullPtr));
-	_map.insert(std::pair<int, boost::shared_ptr<Person> >(2000000000, nullPtr));
+	_set.insert(boost::shared_ptr<Person>(-1, nullPtr));
+	_set.insert(boost::shared_ptr<Person>(2000000000, nullPtr));
 }
 
 DataStructure::~DataStructure()
@@ -34,17 +34,14 @@ void DataStructure::add(int socket, char* msg)
 	//미완성@@@@@@@@@@@@@@@ 
 
 	
-	boost::shared_ptr<Person> personPtr(new Person(socket, distance, hopeNum));
-	int priority = distance + hopeNum;		//우선순위를 int형으로 변환
-	
-	DataStructure::mapIterator insertedIter
-		 = _map.insert(pair<int, boost::shared_ptr<Person> >(priority, personPtr));
+	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
+	DataStructure::DSIterator insertedIter = _set.insert(personPtr);
 
 	if(!isPossible(insertedIter))
 	{
 		delete mlock;
 		
-		_mds->add(priority);
+		_mds->add(socket, insertedIter);
 	}
 }
 
@@ -56,22 +53,14 @@ void DataStructure::checkMDS()
 	{
 		MLock(_mutex);
 		
-		std::vector<MiniPerson>::iterator iter;
-		std::map<int, boost::shared_ptr<Person> > mapIter;
-		for(iter = wakingList->begin(); iter != wakingList->end(); iter++){
-			do{
-				mapIter = _map.find(iter->getPriority());
-				if(mapIter == _map.end()){
-					//이미 전송된 경우 가능함
-					//criticalLog("checkMDS() in DataStructure.cpp\n");
-					MLog::writeLog("checkMDS() in DataStructure.cpp\n"
-						+ "already send\n");
-				}
-			} while(mapIter->getSocket() != iter->getSocket());
-			
-			int newPriority = mapIter->addWaitAdvantage();
-			DataStructure::mapIterator newIter = _map.insert(newPriority, *mapIter);
-			_map.erase(mapIter);
+		std::vector<MiniPerson>::iterator wlIter;	//waking list Iterator
+		DataStructure::DSIterator dsIter;
+		for(wlIter = wakingList->begin(); wlIter != wakingList->end(); wlIter++){
+			dsIter = (*wlIter).getIter();
+
+			boost::shared_ptr<Person> newPerson(*dsIter);
+			_set.erase(dsIter);
+			_set.insert(newPerson);
 
 			isPossible(newIter);
 		}
@@ -80,51 +69,46 @@ void DataStructure::checkMDS()
 
 boost::shared_ptr<Person> DataStructure::getPerson(int key)
 {
-	if(key <= 0)
-		MLog::criticalLog("getPerson in DataStructure.cpp\n parameter is 0\n");
-
-	MLock(_mutex);
-	
-	return _map.find(key);
 }
 
-bool DataStructure::isPossible(DataStructure::mapIterator inputIter)
+bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
 {
 	if(inputIter == NULL)
 		MLog::criticalLog("isPossible in DataStructure.cpp\n inputIter is NULL\n");
 	
-	DataStructure::mapIterator mapIterFront = inputIter;
-	DataStructure::mapIterator mapIterBack = inputIter;
+	DataStructure::DSIterator dsIterFront = inputIter;
+	DataStructure::DSIterator dsIterBack = inputIter;
+	int inputPriority = (*inputIter).getPriority();
 
 	int count = 0;
-	boost::shared_array<DataStructure::mapIterator> 
-		sendingIters(new DataStructure::mapIterator[4]);
+	boost::shared_array<DataStructure::DSIterator> 
+		sendingIters(new DataStructure::DSIterator[4]);
 	for(int searchCount = 0; searchCount < 3; searchCount++){
-		//_map내부에 begin()과 end() 부분에
+		//_set내부에 begin()과 end() 부분에
 		//Padding이 존재.
-		if(mapIterFront != _map.end())
+		if(dsIterFront != _map.end())
 		{
-			mapIterFront++;
+			dsIterFront++;
 			
 			//Matching 기준에 부합하는 값인 경우에
-			if((*mapIterFront).first - priority < MATCHING_LIMIT){
-				sendingIters[count] = mapIterFront;
+			if((*dsIterFront).getPriority() - inputPriority < MATCHING_LIMIT){
+				sendingIters[count] = dsIterFront;
 				count++;
 			}else {
-				mapIterFront = _map.end();
+				dsIterFront = _set.end();
 				searchingCount--;
 			}
 		}
-		else if(mapIterBack != _map.begin())
+		else if(dsIterBack != _set.begin())
 		{
-			mapIterBack--;
+			dsIterBack--;
 			
 			//Matching 기준에 부합하는 값인 경우에
-			if(priority - (*mapIterBack).first < MATCHING_LIMIT){
-				sendingIters[count] = mapIterBack;
+			if(inputPriority - (*dsIterBack).getPriority() < MATCHING_LIMIT){
+				sendingIters[count] = dsIterBack;
 				count++;
 			}else {
-				mapIterFront = _map.end();
+				dsIterFront = _set.end();
 				searchingCount--;
 			}
 		}
@@ -149,4 +133,31 @@ bool DataStructure::isPossible(DataStructure::mapIterator inputIter)
 	}
 }
 
+//현재 sendAndRemove는 Mutex를 두개 소모한다.
+//처음에 DS's mutex를 이용하여 isPossible를 구한 후에 sendAndRemove로 넘어오면
+//MDS remove 를 호출하면서 MDS's mutex도 소모한다.
+//개선은 가능하나 모양이 더러워진다!
+void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator> dsIterators)
+{
+	int size = dsIterators->size();
+	if(size != 4){
+		MLog::writeLog("sendAndRemove in DataStructure.cpp\n dsIterator is not 4\n");	
+	}
 
+	int targetSocket;
+	DataStructure::DSIterator targetIterator;
+	for(int i = 0; i < size; i++){
+		targetIterator = dsIterators[i];
+		targetSocket = (*targetIterator)->getSocket();
+	
+		//Send
+		
+
+
+		//Remove
+		_set.erase(targetIterator);
+		
+		//_mds remove
+		_mds->remove(targetSocket);
+	}
+}

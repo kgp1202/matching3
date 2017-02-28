@@ -20,7 +20,10 @@ void RecvCommand::execute(DataStructure* ds){
 		criticalLog("execute() in RecvCommand.cpp\n nread is 0\n");
 	}
 
-	//Person 객체 수정
+	//Person 객체 수정 
+
+	@@@@@@@@@@@@@@@@@@@@@@수정 필요@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+
 	boost:shared_ptr<Person> personPtr = ds->getPerson(_socket);
 	personPtr->setValue(distance, hopeNum, waitAdvantage);
 }
