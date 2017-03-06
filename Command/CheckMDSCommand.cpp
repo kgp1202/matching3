@@ -4,16 +4,12 @@
 #include "boost/shared_ptr.hpp"
 #include <vector>
 
+CheckMDSCommand::~CheckMDSCommand(){}
+
 void CheckMDSCommand::execute(DataStructure* ds){
 	if(ds == NULL)
-		criticalLog("execute() in CheckMDSCommand\n ds is NULL\n");
+		MLog::criticalLog("execute() in CheckMDSCommand\n ds is NULL\n");
 
-	//MDS's check()
-	MiniDataStructure* mds = ds->getMDS();
-	std::vector<int> wakingList = mds->check();
 
-	//DS's wake()
-	if(!wakingList.empty()){
-		wake(wakingList);
-	}
+	ds->checkMDS();
 }

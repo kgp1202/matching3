@@ -1,6 +1,9 @@
 //MiniPerson.h
 #include "BasicModule/MMemoryPool.h"
+#include "BasicModule/MLog.h"
 #include "boost/shared_ptr.hpp"
+#include <time.h>
+#include <set>
 
 class Person;
 
@@ -8,9 +11,11 @@ class Person;
 //즉 MiniDataStructure 내부에서만 생성해야 한다.
 class MiniPerson : public MMemoryPool<MiniPerson> {
 public:
-	typedef boost::set<shared_ptr<Person> >::iterator DSIterator;
+	typedef std::set<boost::shared_ptr<Person> >::iterator DSIterator;
+	
+	explicit MiniPerson();
 	explicit MiniPerson(DSIterator iter);	
-	DSIterator getIter();
+	inline DSIterator getIter(){ return _iter; }
 	void setValue(DSIterator iter);		//_iter과 _startTime 초기화
 						//초기화 전에 비어있는지 확인
 	
@@ -23,5 +28,5 @@ public:
 						//아니면 false를 리턴.
 private:
 	DSIterator _iter;
-	int _startTime;
+	time_t _startTime;
 };

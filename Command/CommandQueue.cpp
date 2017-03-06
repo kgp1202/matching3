@@ -8,7 +8,7 @@
 CommandQueue::CommandQueue()
 : _queue()
 {	
-	pthread_mutex_init(&_mutex, NULL);
+	pthread_mutex_init(_mutex, NULL);
 }
 
 CommandQueue::~CommandQueue()
@@ -18,21 +18,24 @@ CommandQueue::~CommandQueue()
 
 boost::shared_ptr<Command> CommandQueue::pop()
 {
-	MLock(_mutex);
+	MLock m(_mutex);
 	
-	return _queue.pop();
+	boost::shared_ptr<Command> tempPtr = _queue.front();
+	_queue.pop();
+
+	return tempPtr;
 }
 
 void CommandQueue::push(boost::shared_ptr<Command> commandPtr)
 {
-	MLock(_mutex);	
+	MLock m(_mutex);	
 
 	_queue.push(commandPtr);
 }
 
 std::size_t CommandQueue::size()
 {
-	MLock(_mutex);
+	MLock m(_mutex);
 
 	return _queue.size();
 }	

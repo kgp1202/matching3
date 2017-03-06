@@ -3,30 +3,33 @@
 #include "boost/shared_array.hpp"
 #include <set>
 #include <vector>
-#include "MiniDataStructure.h"
+#include "DataStructure/MiniDataStructure.h"
+#include "BasicModule/MLog.h"
 
 class Person;
 class CommandQueue;
 
-class DataStructre {
+struct PersonCompare{
+	bool operator() (const boost::shared_ptr<Person>& lhs
+				, const boost::shared_ptr<Person> & rhs);
+};
+
+class DataStructure {
 public:
 	explicit DataStructure(CommandQueue*);
 	~DataStructure();	
 
-	void add(int socket, char* msg);	//AddDSCommand
-	inline void checkMDS();			//CheckMDSCommand
+	void add(int socket, boost::shared_array<char> msg);	//AddDSCommand
+	void checkMDS();					//CheckMDSCommand
+	void changeDS(Person* ptr);				//RecvCommand
 
 	typedef std::set<boost::shared_ptr<Person> >::iterator DSIterator;	
-
-	inline DSIterator getPerson(int key);	//getPerson 오류 존재!!!
-						//key 값으로는 정확한 Person 이 아닌
-						//여러개의 후보가 존재!! (MultiMap이기 때문에)
+	
 private:
-	std::set<boost::shared_ptr<Person> > _set;
+	std::set<boost::shared_ptr<Person>, PersonCompare > _set;
 	pthread_mutex_t* _mutex;
 	MiniDataStructure* _mds;		//Not Smart Ptr
 	CommandQueue* _commandQueue;		//Not Smart Ptr 
-	
 
 	//Mutex 처리가 안되어 있음 -----------------------------------------------------
 	bool isPossible(DSIterator);		//key값을 가진 Person이 매칭이 가능한지
