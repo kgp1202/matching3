@@ -18,8 +18,8 @@ MiniPerson::MiniPerson(MiniPerson::DSIterator iter)
 
 void MiniPerson::setValue(MiniPerson::DSIterator iter){
 	boost::shared_ptr<Person> tempIter = *iter;
-	if(tempIter.get() == NULL || _startTime == -1){
-		MLog::writeLog("setValue() in MiniPerson.cpp\n _startTime is init\n");
+	if(iter->get() == NULL){
+		MLog::writeLog("setValue() in MiniPerson.cpp\n input iter is NULL\n");
 	}
 
 	_iter = iter;

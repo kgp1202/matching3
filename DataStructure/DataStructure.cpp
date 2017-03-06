@@ -64,6 +64,8 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 
 void DataStructure::checkMDS()
 {
+	printf("checkMDS() \n");
+
 	std::vector<DataStructure::DSIterator> wakingList = _mds->check();
 
 	if(!wakingList.empty())
@@ -141,7 +143,6 @@ bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
 				sendingIters[count] = dsIterBack;
 				count++;
 			}else {
-				printf("a2\n");
 				dsIterFront = _set.end();
 				searchCount--;
 			}
@@ -185,7 +186,7 @@ void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator>
 		targetSocket = (*targetIterator)->getSocket();
 	
 		//Send@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-		
+		printf("Send\n");	
 
 
 		//Remove
@@ -199,5 +200,11 @@ void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator>
 
 bool PersonCompare::operator() (const boost::shared_ptr<Person>& lhs
 					,const boost::shared_ptr<Person>& rhs){
-	return lhs->getPriority() < rhs->getPriority();
+	int lhsP = lhs->getPriority();
+	int rhsP = rhs->getPriority();
+
+	if(lhsP == rhsP)
+		return true;
+	else
+		return lhsP < rhsP;
 }

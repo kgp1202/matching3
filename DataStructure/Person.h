@@ -27,7 +27,7 @@ public:
 	inline int getDistance(){ return _distance; };
 	
 	inline int getPriority() const{
-		if(_socket == LSP_SOCKET)	return -1;
+		if(_socket == LSP_SOCKET)	return -2000000000;
 		else if(_socket == RSP_SOCKET)	return 2000000000;
 		else				return _distance + _waitAdvantage * WAIT_ADVANTAGE; 
 	}

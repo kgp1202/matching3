@@ -17,4 +17,16 @@ int main(){
 	memcpy(msg.get(), &distance, sizeof(int));	
 
 	ds.add(6, msg);
+
+	ds.add(8, msg);
+
+
+	boost::shared_array<char> msg2(new char[10]);
+	int distance2 = 10;
+	memcpy(msg2.get(), &distance2, sizeof(int));	
+
+	ds.add(7, msg2);
+
+	ds.checkMDS();
+		
 }
