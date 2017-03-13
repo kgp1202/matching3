@@ -6,10 +6,18 @@
 #include "BasicModule/MLog.h"
 #include "boost/shared_array.hpp"
 
+#include <string.h>
+#include <sstream>
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/json_parser.hpp"
+
 RecvCommand::RecvCommand(int socket)
 : _socket(socket) {}
 
 void RecvCommand::execute(DataStructure* ds){
+	using boost::property_tree::ptree;
+	using boost::property_tree::read_json;
+
 	if(ds == NULL)
 		MLog::criticalLog("execute() in RecvCommand.cpp\n ds is NULL\n");
 
@@ -22,9 +30,11 @@ void RecvCommand::execute(DataStructure* ds){
 	}
 
 	//데이터 입력 받음@@@@@@@@@@@@@@@@@@@
-
-
-
+	ptree tree;
+	std::istringstream is(buf.get());
+	read_json(is, tree);
+	
+	int distance = atoi(tree.get<std::string>("distance").c_str());
 
 	//Person 객체 수정 
 	Person* changedPerson = new Person(_socket, distance);

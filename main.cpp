@@ -4,29 +4,57 @@
 #include "Command/CommandQueue.h"
 #include "DataStructure/DataStructure.h"
 #include "DataStructure/Person.h"
+#include "Constant.h"
 #include <string.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
 
 int main(){
+	//FOR DEBUG
+	CommandQueue* cq = new CommandQueue();
+	
+	DataStructure ds(cq);
 
-	CommandQueue* cqPtr = new CommandQueue();
-	DataStructure ds = DataStructure(cqPtr);
-
-	boost::shared_array<char> msg(new char[10]);
-	int distance = 5;
-	memcpy(msg.get(), &distance, sizeof(int));	
-
-	ds.add(6, msg);
-
-	ds.add(8, msg);
+	char* msg = "{\"distance\":\"123\"}";
+	boost::shared_array<char> sp(new char[30]);
+	memcpy(sp.get(), msg, sizeof(msg));
+	ds.add(4, sp);
+	ds.add(5, sp);
+	
+	Person* pt = new Person(4, 245);
+	ds.changeDS(pt);
 
 
-	boost::shared_array<char> msg2(new char[10]);
-	int distance2 = 10;
-	memcpy(msg2.get(), &distance2, sizeof(int));	
+	/*
+	//BEFORE
+	CommandQueue* commandQueue = new CommandQueue();
+	
+	int serv_sock = socket(AF_INET, SOCK_STREAM, 0);
+	if(serv_sock == -1){
+		MLog::criticalLog("main() in main.cpp\n socket\n");
+	}
 
-	ds.add(7, msg2);
-
-	ds.checkMDS();
+	struct sockaddr_in serv_addr;
+	bzero((char*)&serv_addr, sizeof(serv_addr));
 		
+	serv_addr.sin_family = AF_INET;
+	serv_addr.sin_addr.s_addr = INADDR_ANY;
+	serv_addr.sin_port = htons(PORT_NUMBER);
+
+	if(bind(serv_sock, (struct sockaddr*) &serv_addr, sizeof(serv_addr)) < 0){
+		MLog::criticalLog("main() in main.cpp\n bind\n");
+	}
+
+	listen(serv_sock, LISTEN_NUMBER);
+	
+	//epoll & accept
+
+
+	*/
+
+
+	return 0;	
 }

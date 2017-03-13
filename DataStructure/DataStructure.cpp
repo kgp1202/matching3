@@ -10,6 +10,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#include <sstream>
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/json_parser.hpp"
+
 DataStructure::DataStructure(CommandQueue* commandQueue)
 : _commandQueue(commandQueue)
 {
@@ -37,13 +41,16 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 	if(socket <= 0 || msg.get() == NULL)
 		MLog::criticalLog("add() in DataStructure.cpp\n socket is 0 or msg is NULL\n");
 
+	boost::property_tree::ptree tree;
+	std::istringstream is(msg.get());
+	boost::property_tree::read_json(is, tree);
+
+	int distance = atoi(tree.get<std::string>("distance").c_str());
+	
+	
 	MLock* mlock = new MLock(_mutex);	//lock
 	
-	//msg 해석, Person 객체 생성
-	//미완성@@@@@@@@@@@@@@@
-	int distance = 0;
-	memcpy(&distance, (int*)(msg.get()), sizeof(int));
-	
+
 	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
 	std::pair<DataStructure::DSIterator, bool> ret;	
 	ret = _set.insert(personPtr);
@@ -56,7 +63,7 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 
 	if(!isPossible(insertedIter))
 	{
-		delete mlock;
+		delete mlock;			//unlock
 
 		_mds->add(socket, insertedIter);
 	}
@@ -64,9 +71,9 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 
 void DataStructure::checkMDS()
 {
-	printf("checkMDS() \n");
-
 	std::vector<DataStructure::DSIterator> wakingList = _mds->check();
+	
+	printf("Check mini complete\n");
 
 	if(!wakingList.empty())
 	{
@@ -186,7 +193,7 @@ void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator>
 		targetSocket = (*targetIterator)->getSocket();
 	
 		//Send@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-		printf("Send\n");	
+		printf("Send %d\n", targetSocket);	
 
 
 		//Remove

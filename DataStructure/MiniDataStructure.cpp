@@ -21,8 +21,7 @@ void MiniDataStructure::add(int socket, MiniPerson::DSIterator iter){
 		_vector.resize(addedSize, MiniPerson());
 	}
 
-	MiniPerson temp = _vector.at(socket);
-	temp.setValue(iter);
+	_vector.at(socket).setValue(iter);
 }
 
 std::vector<MiniPerson::DSIterator> MiniDataStructure::check()
@@ -37,14 +36,13 @@ std::vector<MiniPerson::DSIterator> MiniDataStructure::check()
 	{
 		if((*iter).isEmpty())
 		{
-			MLog::writeLog("check() in MDS.cpp\nMDS's _vector is empty\n");
 			continue;
 		}
 		else
 		{
 			//시간 계산
 			if((*iter).timeCheck()){
-				returnVector[count] = (*iter).getIter();
+				returnVector.push_back(iter->getIter());
 				count++;
 			}
 		}
