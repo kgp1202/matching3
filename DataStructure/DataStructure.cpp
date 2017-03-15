@@ -8,14 +8,17 @@
 #include "boost/shared_ptr.hpp"
 #include <pthread.h>
 #include <string.h>
-#include <stdio.h>
+
+//FOR DEBUG=======================
+#include <stdio.h>	//FOR DEBUG
+//================================
 
 #include <sstream>
 #include "boost/property_tree/ptree.hpp"
 #include "boost/property_tree/json_parser.hpp"
 
 DataStructure::DataStructure(CommandQueue* commandQueue)
-: _commandQueue(commandQueue)
+: _commandQueue(commandQueue), _mutex(new pthread_mutex_t())
 {
 	pthread_mutex_init(_mutex, NULL);
 
@@ -46,12 +49,14 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 	boost::property_tree::read_json(is, tree);
 
 	int distance = atoi(tree.get<std::string>("distance").c_str());
-	
-	
+	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
+
+	add(socket, personPtr);	
+}
+
+void DataStructure::add(int socket, boost::shared_ptr<Person> personPtr){
 	MLock* mlock = new MLock(_mutex);	//lock
 	
-
-	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
 	std::pair<DataStructure::DSIterator, bool> ret;	
 	ret = _set.insert(personPtr);
 
@@ -73,8 +78,6 @@ void DataStructure::checkMDS()
 {
 	std::vector<DataStructure::DSIterator> wakingList = _mds->check();
 	
-	printf("Check mini complete\n");
-
 	if(!wakingList.empty())
 	{
 		MLock m(_mutex);
@@ -101,15 +104,15 @@ void DataStructure::checkMDS()
 
 void DataStructure::changeDS(Person* changedPerson)
 {
-	MLock m(_mutex);
-
 	DataStructure::DSIterator dsIter = _mds->getPerson(changedPerson->getSocket());
+	
+	{
+		MLock m(_mutex);
+		_set.erase(dsIter);
+	}
 
-	boost::shared_ptr<Person> tp = (*dsIter);
-	tp.reset(changedPerson);
-
-	_set.erase(*dsIter);
-	_set.insert(*dsIter);
+	boost::shared_ptr<Person> personPtr(changedPerson);
+	add(changedPerson->getSocket(), personPtr);
 }
 
 bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
@@ -214,4 +217,22 @@ bool PersonCompare::operator() (const boost::shared_ptr<Person>& lhs
 		return true;
 	else
 		return lhsP < rhsP;
+}
+
+//FOR DEBUG
+void DataStructure::print(){
+	printf("\n=================DataStructure print======================\n");		
+
+	{		
+		MLock m(_mutex);		
+
+		DSIterator iter;
+		for(iter = _set.begin(); iter != _set.end(); iter++){
+			printf("%d socket = %d distance = %d waitAdvantage = %d\n", 
+				&(*iter), (*iter)->getSocket(), (*iter)->getDistance()
+				, (*iter)->getPriority());
+		}
+	}
+
+	_mds->print();
 }

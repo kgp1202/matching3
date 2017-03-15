@@ -6,6 +6,11 @@
 #include "DataStructure/MiniDataStructure.h"
 #include "BasicModule/MLog.h"
 
+//FOR DEBUG============================
+#include <stdio.h>	//FOR DEBUG
+//=====================================
+
+
 class Person;
 class CommandQueue;
 
@@ -20,10 +25,14 @@ public:
 	~DataStructure();	
 
 	void add(int socket, boost::shared_array<char> msg);	//AddDSCommand
+	void add(int socket, boost::shared_ptr<Person> personPtr);
 	void checkMDS();					//CheckMDSCommand
 	void changeDS(Person* ptr);				//RecvCommand
 
 	typedef std::set<boost::shared_ptr<Person> >::iterator DSIterator;	
+
+	//FOR DEBUG
+	void print();
 	
 private:
 	std::set<boost::shared_ptr<Person>, PersonCompare > _set;

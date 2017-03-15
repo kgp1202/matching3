@@ -26,6 +26,9 @@ public:
 	bool timeCheck();			//Time Check 해준다
 						//시간이 경과되어져 있으면 true
 						//아니면 false를 리턴.
+
+	//FOR DEBUG
+	void print();
 private:
 	DSIterator _iter;
 	time_t _startTime;

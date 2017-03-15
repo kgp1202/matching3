@@ -5,7 +5,7 @@
 #include <stdio.h>
 
 MiniDataStructure::MiniDataStructure()
-: _vector()
+: _vector(), _mutex(new pthread_mutex_t())
 {
 	pthread_mutex_init(_mutex, NULL);
 }	
@@ -61,4 +61,15 @@ MiniPerson::DSIterator MiniDataStructure::getPerson(int socket)
 	MiniPerson::DSIterator d = _vector[socket].getIter();
 
 	return d;
+}
+
+//FOR DEBUG
+void MiniDataStructure::print(){
+	printf("\n-------------MiniDataStructure print------------------\n");
+	std::vector<MiniPerson>::iterator iter;
+
+	MLock m(_mutex);
+	for(iter = _vector.begin(); iter != _vector.end(); iter++){
+		(*iter).print();
+	}
 }

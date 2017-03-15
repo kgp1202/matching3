@@ -17,10 +17,6 @@ MiniPerson::MiniPerson(MiniPerson::DSIterator iter)
 }
 
 void MiniPerson::setValue(MiniPerson::DSIterator iter){
-	if(_startTime != -1){
-		MLog::writeLog("setValue() in MiniPerson.cpp\n input iter is NULL\n");
-	}
-
 	_iter = iter;
 	_startTime = time(NULL);
 }
@@ -58,4 +54,10 @@ bool MiniPerson::timeCheck(){
 	}else {
 		return false;
 	}
+}
+
+//FOR DEBUG
+void MiniPerson::print(){
+	printf("Person's address : %d, startTime : %ld\n", &(*_iter), _startTime);
+
 }

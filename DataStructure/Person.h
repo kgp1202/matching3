@@ -31,6 +31,9 @@ public:
 		else if(_socket == RSP_SOCKET)	return 2000000000;
 		else				return _distance + _waitAdvantage * WAIT_ADVANTAGE; 
 	}
+
+	//FOR DEBUG
+	void print();
 private:
 	int _socket;		//socket Number
 	int _distance;		//거리

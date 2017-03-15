@@ -338,3 +338,5 @@ clearValue() in MiniPerson.cpp
  It is already clear
 sendAndRemove in DataStructure.cpp
  dsIterator is not 4
+setValue() in MiniPerson.cpp
+ input iter is NULL

@@ -1,13 +1,12 @@
 //CommandQueue.cpp
 #include "Command/CommandQueue.h"
 #include "BasicModule/MLock.h"
-#include "boost/shared_ptr.hpp"
-#include <queue>
-#include <pthread.h>
+
+#include <stdio.h>
 
 CommandQueue::CommandQueue()
-: _queue()
-{	
+: _queue(), _mutex(new pthread_mutex_t())
+{
 	pthread_mutex_init(_mutex, NULL);
 }
 

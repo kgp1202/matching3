@@ -26,6 +26,10 @@ public:
 	std::vector<MiniPerson::DSIterator> check();
 
 	MiniPerson::DSIterator getPerson(int socket);
+
+	//FOR DEBUG
+	void print();
+	
 private:
 	std::vector<MiniPerson> _vector;
 	pthread_mutex_t* _mutex;

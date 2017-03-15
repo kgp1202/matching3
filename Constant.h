@@ -11,7 +11,7 @@ const int RSP_SOCKET = -124;		//Right Side Padding
 
 //main
 const int PORT_NUMBER = 5001;
-const int LISTEN_NUMBER = 10000;
-
-
+const int LISTEN_NUMBER = 100;
+const int CONCURRENT_MAX_NUMBER = 1000;
+const int THREAD_SIZE = 5;
 
