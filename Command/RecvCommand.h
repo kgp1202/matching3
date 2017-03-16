@@ -8,6 +8,12 @@ class RecvCommand : public Command {
 public:
 	explicit RecvCommand(int socket);
 	void execute(DataStructure*);
+
+	//FOR DEBUG
+	explicit RecvCommand(int socket, int distance);
 private:
 	int _socket;
+
+	//FOR DEBUG
+	int _distance = 0;
 };

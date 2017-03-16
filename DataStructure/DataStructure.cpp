@@ -44,11 +44,15 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 	if(socket <= 0 || msg.get() == NULL)
 		MLog::criticalLog("add() in DataStructure.cpp\n socket is 0 or msg is NULL\n");
 
+	printf("%s\n", msg.get());
+
 	boost::property_tree::ptree tree;
 	std::istringstream is(msg.get());
 	boost::property_tree::read_json(is, tree);
 
+
 	int distance = atoi(tree.get<std::string>("distance").c_str());
+
 	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
 
 	add(socket, personPtr);	
@@ -71,6 +75,8 @@ void DataStructure::add(int socket, boost::shared_ptr<Person> personPtr){
 		delete mlock;			//unlock
 
 		_mds->add(socket, insertedIter);
+	}else{
+		delete mlock;
 	}
 }
 
@@ -102,17 +108,29 @@ void DataStructure::checkMDS()
 	}
 }
 
-void DataStructure::changeDS(Person* changedPerson)
+void DataStructure::changeDS(int socket, int distance)
 {
-	DataStructure::DSIterator dsIter = _mds->getPerson(changedPerson->getSocket());
-	
+	DataStructure::DSIterator dsIter = _mds->getPerson(socket);
+	Person* changedPerson;
 	{
 		MLock m(_mutex);
+		changedPerson = new Person(socket, distance);
 		_set.erase(dsIter);
 	}
 
 	boost::shared_ptr<Person> personPtr(changedPerson);
 	add(changedPerson->getSocket(), personPtr);
+}
+
+void DataStructure::removeClient(int socket)
+{
+	DataStructure::DSIterator deletedIter = _mds->getPerson(socket);
+
+	//Remove
+	_set.erase(deletedIter);
+	
+	//_mds remove
+	_mds->remove(socket);
 }
 
 bool DataStructure::isPossible(DataStructure::DSIterator inputIter)

@@ -17,25 +17,106 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <sys/epoll.h>
+#include <utility>
 
-void* thread_work(void* input){
-	printf("SS\n");
+void* thread_work(void* param){
+        std::pair<CommandQueue*, DataStructure*>* thread_param =
+                (std::pair<CommandQueue*, DataStructure*>*) param;
+
+        CommandQueue* commandQueue = thread_param->first;
+        DataStructure* ds = thread_param->second;
+
+//	delete thread_param;
+
+	boost::shared_ptr<Command> commandPtr;
+	while(true){
+		//Busy Wait!!	
+		//Upgrade 필요!!
+		commandPtr = commandQueue->pop();
+		if(commandPtr == NULL){
+			continue;
+		}		
+
+		if(commandPtr.get() == NULL){
+			MLog::writeLog("thread_work() in main.cpp\n");
+			continue;
+		}
+
+		commandPtr->execute(ds);
+	}
 }
 
 int main(){
-	CommandQueue commandQueue = CommandQueue();
-	DataStructure* ds = new DataStructure(&commandQueue);
+	CommandQueue* commandQueue = new CommandQueue();
+	DataStructure* ds = new DataStructure(commandQueue);
 	
 
 	//Worker Thread init
+	std::pair<CommandQueue*, DataStructure*>* thread_param = 
+		new std::pair<CommandQueue*, DataStructure*> (commandQueue, ds);
 	pthread_t* pid = new pthread_t[THREAD_SIZE];
 	for(int i = 0; i < THREAD_SIZE; i++){
-		if(pthread_create(&pid[i], NULL, &thread_work, NULL) < 0){
+		if(pthread_create(&pid[i], NULL, &thread_work, thread_param) < 0){
 			MLog::criticalLog("main() in main.cpp\n");
 		}
 	}
 
 
+	/*
+	//FOR DEBUG	
+	int socket;
+	int d;
+	char* distance = new char[10];
+	char* front = "{\"distance\":\"";
+	char* back = "\"}\0";
+	char* buf = new char[30];
+	char input;
+	while(true){
+		printf("Add : A, CheckMDS : C, Recv : R, print : P\n");
+
+		scanf("%c", &input);
+
+		boost::shared_ptr<Command> commandPtr;
+		switch(input){
+		case 'A':	
+			printf("Input socket : ");
+			scanf("%d", &socket);
+			printf("Input distance : ");
+			scanf("%s", distance);
+			
+			memset(buf, 0, 30);
+			
+			memcpy(buf, front, strlen(front));
+			memcpy(buf + strlen(buf), distance, strlen(distance));
+			memcpy(buf + strlen(buf), back, strlen(back));
+		
+	
+			commandPtr.reset(new AddDSCommand(socket, buf));
+			commandQueue->push(commandPtr);
+			break;
+		case 'C':
+			commandPtr.reset(new CheckMDSCommand());
+			commandQueue->push(commandPtr);
+			break;
+		case 'R':
+			printf("Input socket : ");
+			scanf("%d", &socket);
+			printf("Input distance : ");
+			scanf("%d", &d);
+		
+			printf("%d %d\n", socket, d);
+			commandPtr.reset(new RecvCommand(socket, d));
+			commandQueue->push(commandPtr);
+			break;
+		case 'P':
+			ds->print();
+			break;	
+		}
+	}
+	*/
+
+	
+	
 	//server init	
 	int serv_sock = socket(AF_INET, SOCK_STREAM, 0);
 
@@ -103,7 +184,7 @@ int main(){
 					//ADDDSCommand push
 					boost::shared_ptr<Command> addCommandPtr
 						(new AddDSCommand(accepted_sock));
-					commandQueue.push(addCommandPtr);
+					commandQueue->push(addCommandPtr);
 				}
 			}
 			else
@@ -111,7 +192,7 @@ int main(){
 				//RecvCommand 	DS에 등록된 정보를 변경
 				boost::shared_ptr<Command> recvCommandPtr
 					(new RecvCommand(events[i].data.fd));
-				commandQueue.push(recvCommandPtr);
+				commandQueue->push(recvCommandPtr);
 			}
 		}
 	}

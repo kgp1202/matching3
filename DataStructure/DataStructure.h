@@ -27,7 +27,10 @@ public:
 	void add(int socket, boost::shared_array<char> msg);	//AddDSCommand
 	void add(int socket, boost::shared_ptr<Person> personPtr);
 	void checkMDS();					//CheckMDSCommand
-	void changeDS(Person* ptr);				//RecvCommand
+//	void changeDS(Person* ptr);				//RecvCommand
+	void changeDS(int socket, int distance);
+	void removeClient(int socket);				//RecvCommand로
+						//read 0을 리턴된 경우에 호출.
 
 	typedef std::set<boost::shared_ptr<Person> >::iterator DSIterator;	
 

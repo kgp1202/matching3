@@ -18,11 +18,17 @@ CommandQueue::~CommandQueue()
 boost::shared_ptr<Command> CommandQueue::pop()
 {
 	MLock m(_mutex);
-	
+		
 	boost::shared_ptr<Command> tempPtr = _queue.front();
-	_queue.pop();
-
-	return tempPtr;
+	if(tempPtr == NULL)	//if _queue is empty
+	{
+		return tempPtr;
+	}
+	else
+	{
+		_queue.pop();
+		return tempPtr;
+	}
 }
 
 void CommandQueue::push(boost::shared_ptr<Command> commandPtr)

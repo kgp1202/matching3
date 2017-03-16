@@ -4,7 +4,7 @@
 class DataStructure;
 
 class CheckMDSCommand : public Command {
-private:
+public:
 	~CheckMDSCommand();
 	void execute(DataStructure*);
 };
