@@ -50,6 +50,7 @@ void RecvCommand::execute(DataStructure* ds){
 		//Person 객체 수정 
 		//Person* changedPerson = new Person(_socket, distance);
 		ds->changeDS(_socket, distance);
+	}
 }
 
 //FOR DEBUG

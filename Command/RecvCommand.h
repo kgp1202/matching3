@@ -15,5 +15,5 @@ private:
 	int _socket;
 
 	//FOR DEBUG
-	int _distance = 0;
+	int _distance;
 };

@@ -26,14 +26,14 @@ void* thread_work(void* param){
         CommandQueue* commandQueue = thread_param->first;
         DataStructure* ds = thread_param->second;
 
-//	delete thread_param;
 
 	boost::shared_ptr<Command> commandPtr;
 	while(true){
-		//Busy Wait!!	
-		//Upgrade 필요!!
+		printf("A\n");
 		commandPtr = commandQueue->pop();
 		if(commandPtr == NULL){
+			MLog::writeLog("thread_work() in main.cpp\n commandPtr is NULL\n");
+
 			continue;
 		}		
 
@@ -62,9 +62,8 @@ int main(){
 	}
 
 
-	/*
 	//FOR DEBUG	
-	int socket;
+	int sock;
 	int d;
 	char* distance = new char[10];
 	char* front = "{\"distance\":\"";
@@ -80,7 +79,7 @@ int main(){
 		switch(input){
 		case 'A':	
 			printf("Input socket : ");
-			scanf("%d", &socket);
+			scanf("%d", &sock);
 			printf("Input distance : ");
 			scanf("%s", distance);
 			
@@ -91,7 +90,7 @@ int main(){
 			memcpy(buf + strlen(buf), back, strlen(back));
 		
 	
-			commandPtr.reset(new AddDSCommand(socket, buf));
+			commandPtr.reset(new AddDSCommand(sock, buf));
 			commandQueue->push(commandPtr);
 			break;
 		case 'C':
@@ -104,8 +103,8 @@ int main(){
 			printf("Input distance : ");
 			scanf("%d", &d);
 		
-			printf("%d %d\n", socket, d);
-			commandPtr.reset(new RecvCommand(socket, d));
+			printf("%d %d\n", sock, d);
+			commandPtr.reset(new RecvCommand(sock, d));
 			commandQueue->push(commandPtr);
 			break;
 		case 'P':
@@ -113,8 +112,6 @@ int main(){
 			break;	
 		}
 	}
-	*/
-
 	
 	
 	//server init	

@@ -15,4 +15,5 @@ public:
 private:
 	std::queue<boost::shared_ptr<Command> > _queue;
 	pthread_mutex_t* _mutex;
+	pthread_mutex_t* _mutex_pop_possible;
 };
