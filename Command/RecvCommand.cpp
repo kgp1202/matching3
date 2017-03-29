@@ -21,13 +21,11 @@ void RecvCommand::execute(DataStructure* ds){
 	if(ds == NULL)
 		MLog::criticalLog("execute() in RecvCommand.cpp\n ds is NULL\n");
 
-
 	//FOR DEBUG
 	if(_distance != 0){
 		ds->changeDS(_socket, _distance);
 		return;
 	}
-
 
 	//Data 수신
 	boost::shared_array<char> buf(new char[BUF_SIZE]);

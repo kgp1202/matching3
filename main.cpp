@@ -29,7 +29,6 @@ void* thread_work(void* param){
 
 	boost::shared_ptr<Command> commandPtr;
 	while(true){
-		printf("A\n");
 		commandPtr = commandQueue->pop();
 		if(commandPtr == NULL){
 			MLog::writeLog("thread_work() in main.cpp\n commandPtr is NULL\n");
@@ -41,7 +40,7 @@ void* thread_work(void* param){
 			MLog::writeLog("thread_work() in main.cpp\n");
 			continue;
 		}
-
+		
 		commandPtr->execute(ds);
 	}
 }
@@ -61,7 +60,7 @@ int main(){
 		}
 	}
 
-
+/*
 	//FOR DEBUG	
 	int sock;
 	int d;
@@ -112,11 +111,10 @@ int main(){
 			break;	
 		}
 	}
-	
+*/	
 	
 	//server init	
 	int serv_sock = socket(AF_INET, SOCK_STREAM, 0);
-
 	{
 		//set serv_sock NON_BLOCK
 		int flags = fcntl(serv_sock, F_GETFL, 0);
@@ -146,10 +144,9 @@ int main(){
 	//epoll init
 	int epoll_fd = epoll_create(CONCURRENT_MAX_NUMBER);
 	struct epoll_event init_event;
-	init_event.events = EPOLLIN;
+	init_event.events = EPOLLIN | EPOLLET;
 	init_event.data.fd = serv_sock;
 	epoll_ctl(epoll_fd, EPOLL_CTL_ADD, serv_sock, &init_event);
-
 
 	//epoll
 	struct epoll_event* events = (struct epoll_event*) malloc
@@ -159,25 +156,32 @@ int main(){
 	while(true)
 	{
 		event_count = epoll_wait(epoll_fd, events, CONCURRENT_MAX_NUMBER, timeout);
+		printf("EPOLL\n");
+
 		if(event_count == -1)
 			continue;
-		
+	
 		for(int i = 0; i < event_count; i++)
 		{
 			if(events[i].data.fd == serv_sock)
-			{
+			{				
 				//accept ALL
 				while(true){
 					//serv_sock is NON_BLOCK
 					accepted_sock = accept(serv_sock, NULL, NULL);
 					if(accepted_sock < 0){
 						break;
+						continue;
 					}
 
 					init_event.data.fd = accepted_sock;
 					epoll_ctl(epoll_fd, EPOLL_CTL_ADD, accepted_sock,
 						&init_event);
 
+					printf("%d\n", accepted_sock);
+
+					//이 부분을 RecvCommand에 넣어야 한다.
+					//@@@@@@@@@@@@@@@수정 필요@@@@@@@@@@@@@@@@
 					//ADDDSCommand push
 					boost::shared_ptr<Command> addCommandPtr
 						(new AddDSCommand(accepted_sock));

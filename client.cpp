@@ -5,26 +5,33 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
+#include <sys/wait.h>
 
 int main(){
-	int sock = socket(AF_INET, SOCK_STREAM, 0);
-	struct sockaddr_in sock_addr;
+	int sock[1000];
 
-	sock_addr.sin_family = AF_INET;
-	sock_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-	sock_addr.sin_port = htons(5001);
+	for(int i = 0; i < 1; i++){
+		sock[i] = socket(AF_INET, SOCK_STREAM, 0);
+		struct sockaddr_in sock_addr;
 
-	connect(sock, (struct sockaddr*)&sock_addr, sizeof(sock_addr));
+		sock_addr.sin_family = AF_INET;
+		sock_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+		sock_addr.sin_port = htons(5001);
 
-	char* msg = "{\"distance\":\"30\"}";
+		connect(sock[i], (struct sockaddr*)&sock_addr, sizeof(sock_addr));
 
-	write(sock, msg, strlen(msg));
+		char* msg = "{\"distance\":\"30\"}";
 
-	char* buf = new char[100];
-	int nread = read(sock, buf, sizeof(buf));
-	buf[nread] = '\0';
+		write(sock[i], msg, strlen(msg));
 
-	printf("%s", buf);
+//		char* buf = new char[100];
+//		int nread = read(sock[i], buf, sizeof(buf));
+//		buf[nread] = '\0';
+	
+		//printf("%s", buf);
+	}
+
+//	close(sock[0]);
+	sleep(1000000);
 	return 0;
 }

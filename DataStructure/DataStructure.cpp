@@ -55,7 +55,9 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 
 	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
 
-	add(socket, personPtr);	
+	add(socket, personPtr);
+
+	printf("%s add complete\n", msg.get());	
 }
 
 void DataStructure::add(int socket, boost::shared_ptr<Person> personPtr){
@@ -124,6 +126,7 @@ void DataStructure::changeDS(int socket, int distance)
 
 void DataStructure::removeClient(int socket)
 {
+	printf("remove : %d\n",socket);
 	DataStructure::DSIterator deletedIter = _mds->getPerson(socket);
 
 	//Remove
@@ -131,6 +134,8 @@ void DataStructure::removeClient(int socket)
 	
 	//_mds remove
 	_mds->remove(socket);
+
+	printf("remove : %dcomplete\n", socket);
 }
 
 bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
