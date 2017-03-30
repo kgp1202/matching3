@@ -12,42 +12,37 @@
 #include "boost/property_tree/json_parser.hpp"
 
 RecvCommand::RecvCommand(int socket)
-: _socket(socket) {}
+: _socket(socket), _distance(0) {}
 
+//데이터를 읽어서 이를 DS로 넘겨준다.
 void RecvCommand::execute(DataStructure* ds){
-	using boost::property_tree::ptree;
-	using boost::property_tree::read_json;
-
 	if(ds == NULL)
 		MLog::criticalLog("execute() in RecvCommand.cpp\n ds is NULL\n");
 
 	//FOR DEBUG
 	if(_distance != 0){
+		printf("?\n");
 		ds->changeDS(_socket, _distance);
 		return;
 	}
+
+	printf("%d : ", _socket);
 
 	//Data 수신
 	boost::shared_array<char> buf(new char[BUF_SIZE]);
 	int nread = read(_socket, buf.get(), BUF_SIZE);
 	
 	if(nread == 0){	//Client의 연결 종료
+		printf("Remove\n");
 		ds->removeClient(_socket);
 	}
 	else if(nread < 0){
 		MLog::criticalLog("execute() in RecvCommand.cpp\n nread is 0\n");
 	}
 	else{
-		//데이터 입력 받음
-		ptree tree;
-		std::istringstream is(buf.get());
-		read_json(is, tree);
-		
-		int distance = atoi(tree.get<std::string>("distance").c_str());
-
-		//Person 객체 수정 
-		//Person* changedPerson = new Person(_socket, distance);
-		ds->changeDS(_socket, distance);
+		printf("Add\n");
+		buf[nread] = '\0';
+		ds->add(_socket, buf);
 	}
 }
 

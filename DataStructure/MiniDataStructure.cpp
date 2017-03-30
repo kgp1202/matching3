@@ -8,16 +8,20 @@ MiniDataStructure::MiniDataStructure()
 : _vector(), _mutex(new pthread_mutex_t())
 {
 	pthread_mutex_init(_mutex, NULL);
-}	
+}
+
+void MiniDataStructure::setNullIter(MiniPerson::DSIterator _iter){
+	nullIter = _iter;
+}
 
 void MiniDataStructure::add(int socket, MiniPerson::DSIterator iter){
 	if(socket <= 0 || (*iter).get() == NULL)
 		MLog::criticalLog("add in MiniDataStructure.cpp\n");
 	
 	MLock m(_mutex);
-	
+
 	if(_vector.size() <= socket){
-		int addedSize = socket + 10;
+		int addedSize = _vector.size() + 10;
 		_vector.resize(addedSize, MiniPerson());
 	}
 
@@ -58,9 +62,31 @@ MiniPerson::DSIterator MiniDataStructure::getPerson(int socket)
 
 	MLock m(_mutex);
 
-	MiniPerson::DSIterator d = _vector[socket].getIter();
+	if(_vector.size() >= socket){
+		MiniPerson tempMP = _vector.at(socket);
+	
+		if(!tempMP.isEmpty()){
+			MiniPerson::DSIterator d = _vector[socket].getIter();
+			return d;
+		}
+	}
 
-	return d;
+	return nullIter;
+}
+
+bool MiniDataStructure::isEmpty(int socket)
+{
+	if(socket <= 0)
+		MLog::criticalLog("isExist in MDS.cpp\n");
+
+	MLock m(_mutex);
+	
+	if(_vector.size() <= socket){
+		return true;
+	}else{
+		MiniPerson tempMP = _vector.at(socket);
+		return tempMP.isEmpty();
+	}
 }
 
 //FOR DEBUG

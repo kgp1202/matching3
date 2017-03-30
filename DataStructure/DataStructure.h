@@ -25,7 +25,7 @@ public:
 	~DataStructure();	
 
 	void add(int socket, boost::shared_array<char> msg);	//AddDSCommand
-	void add(int socket, boost::shared_ptr<Person> personPtr);
+	void add(int socket, boost::shared_ptr<Person> personPtr);	//Wrong!!
 	void checkMDS();					//CheckMDSCommand
 //	void changeDS(Person* ptr);				//RecvCommand
 	void changeDS(int socket, int distance);
@@ -42,6 +42,7 @@ private:
 	pthread_mutex_t* _mutex;
 	MiniDataStructure* _mds;		//Not Smart Ptr
 	CommandQueue* _commandQueue;		//Not Smart Ptr 
+	DSIterator nullIter;
 
 	//Mutex 처리가 안되어 있음 -----------------------------------------------------
 	bool isPossible(DSIterator);		//key값을 가진 Person이 매칭이 가능한지

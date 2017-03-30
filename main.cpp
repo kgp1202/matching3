@@ -26,22 +26,25 @@ void* thread_work(void* param){
         CommandQueue* commandQueue = thread_param->first;
         DataStructure* ds = thread_param->second;
 
-
 	boost::shared_ptr<Command> commandPtr;
 	while(true){
+		printf("0\n");
 		commandPtr = commandQueue->pop();
+		printf("1\n");
 		if(commandPtr == NULL){
 			MLog::writeLog("thread_work() in main.cpp\n commandPtr is NULL\n");
-
 			continue;
 		}		
 
+		printf("2\n");
 		if(commandPtr.get() == NULL){
 			MLog::writeLog("thread_work() in main.cpp\n");
 			continue;
 		}
 		
+		printf("3\n");
 		commandPtr->execute(ds);
+		printf("4\n");
 	}
 }
 
@@ -156,7 +159,6 @@ int main(){
 	while(true)
 	{
 		event_count = epoll_wait(epoll_fd, events, CONCURRENT_MAX_NUMBER, timeout);
-		printf("EPOLL\n");
 
 		if(event_count == -1)
 			continue;
@@ -174,18 +176,16 @@ int main(){
 						continue;
 					}
 
-					init_event.data.fd = accepted_sock;
-					epoll_ctl(epoll_fd, EPOLL_CTL_ADD, accepted_sock,
-						&init_event);
+					int flags = fcntl(accepted_sock, F_GETFL, 0);
+					if(fcntl(accepted_sock, F_SETFL, flags | O_NONBLOCK) < 0){
+						MLog::criticalLog("main() in main.cpp\n");
+					}
 
 					printf("%d\n", accepted_sock);
 
-					//이 부분을 RecvCommand에 넣어야 한다.
-					//@@@@@@@@@@@@@@@수정 필요@@@@@@@@@@@@@@@@
-					//ADDDSCommand push
-					boost::shared_ptr<Command> addCommandPtr
-						(new AddDSCommand(accepted_sock));
-					commandQueue->push(addCommandPtr);
+					init_event.data.fd = accepted_sock;
+					epoll_ctl(epoll_fd, EPOLL_CTL_ADD, accepted_sock,
+						&init_event);
 				}
 			}
 			else

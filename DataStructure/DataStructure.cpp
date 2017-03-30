@@ -3,6 +3,7 @@
 #include "DataStructure/DataStructure.h"
 #include "DataStructure/Person.h"
 #include "Command/CommandQueue.h"
+#include "Command/RecvCommand.h"
 #include "BasicModule/MLock.h"
 #include "BasicModule/MLog.h"
 #include "boost/shared_ptr.hpp"
@@ -23,13 +24,19 @@ DataStructure::DataStructure(CommandQueue* commandQueue)
 	pthread_mutex_init(_mutex, NULL);
 
 	_mds = new MiniDataStructure();
+
+	MLock m(_mutex);
 	
 	//Map -1과 MAX값에 Padding
 	boost::shared_ptr<Person> lsp (new Person(LSP_SOCKET, 0));	//Left Side Padding
 	boost::shared_ptr<Person> rsp (new Person(RSP_SOCKET, 0));	//Right Side Padding
 
-	_set.insert(lsp);
+	std::pair<DataStructure::DSIterator, bool> ret;	
+	ret = _set.insert(lsp);
 	_set.insert(rsp);
+
+	_mds->setNullIter(ret.first);
+	nullIter = ret.first;
 }
 
 DataStructure::~DataStructure()
@@ -44,20 +51,50 @@ void DataStructure::add(int socket, boost::shared_array<char> msg)
 	if(socket <= 0 || msg.get() == NULL)
 		MLog::criticalLog("add() in DataStructure.cpp\n socket is 0 or msg is NULL\n");
 
-	printf("%s\n", msg.get());
-
 	boost::property_tree::ptree tree;
 	std::istringstream is(msg.get());
 	boost::property_tree::read_json(is, tree);
 
-
 	int distance = atoi(tree.get<std::string>("distance").c_str());
 
-	boost::shared_ptr<Person> personPtr(new Person(socket, distance));
 
-	add(socket, personPtr);
+	if(_mds->isEmpty(socket)){		//Add
+		MLock* mlock = new MLock(_mutex);	//lock
 
-	printf("%s add complete\n", msg.get());	
+		boost::shared_ptr<Person> personPtr(new Person(socket, distance));
+		
+		std::pair<DataStructure::DSIterator, bool> ret;	
+		ret = _set.insert(personPtr);
+
+		if(ret.second == false){
+			MLog::criticalLog("add() in datastructure.cpp\nalready exist\n");
+		}
+		else{
+			DataStructure::DSIterator insertedIter = ret.first;
+
+			if(!isPossible(insertedIter))
+			{
+				delete mlock;			//unlock
+		
+				_mds->add(socket, insertedIter);
+			}else{
+				delete mlock;
+			}
+		}
+	}else {					//Change
+		changeDS(socket, distance);
+	}
+
+	//check if socket is quick exit
+	char buf[2];
+	int ret = read(socket, buf, sizeof(buf));
+	if(ret == 0){		//quick exit
+		printf("Quick Exit %dn", socket);
+		removeClient(socket);
+	}else if(ret > 0){	
+		boost::shared_ptr<Command> recvCommandPtr (new RecvCommand(socket));
+		_commandQueue->push(recvCommandPtr);
+	}
 }
 
 void DataStructure::add(int socket, boost::shared_ptr<Person> personPtr){
@@ -69,16 +106,17 @@ void DataStructure::add(int socket, boost::shared_ptr<Person> personPtr){
 	if(ret.second == false){
 		MLog::criticalLog("add() in datastructure.cpp\nalready exist\n");
 	}
+	else{
+		DataStructure::DSIterator insertedIter = ret.first;
+
+		if(!isPossible(insertedIter))
+		{
+			delete mlock;			//unlock
 	
-	DataStructure::DSIterator insertedIter = ret.first;
-
-	if(!isPossible(insertedIter))
-	{
-		delete mlock;			//unlock
-
-		_mds->add(socket, insertedIter);
-	}else{
-		delete mlock;
+			_mds->add(socket, insertedIter);
+		}else{
+			delete mlock;
+		}
 	}
 }
 
@@ -113,6 +151,11 @@ void DataStructure::checkMDS()
 void DataStructure::changeDS(int socket, int distance)
 {
 	DataStructure::DSIterator dsIter = _mds->getPerson(socket);
+	if(dsIter == nullIter){
+		MLog::writeLog("changeDS() in DS.cpp %d\n", socket);
+		return;
+	}
+
 	Person* changedPerson;
 	{
 		MLock m(_mutex);
@@ -126,16 +169,21 @@ void DataStructure::changeDS(int socket, int distance)
 
 void DataStructure::removeClient(int socket)
 {
-	printf("remove : %d\n",socket);
+	MLock* m = new MLock(_mutex);
+
 	DataStructure::DSIterator deletedIter = _mds->getPerson(socket);
+	if(deletedIter == nullIter){
+		MLog::writeLog("removeDS() in DS.cpp\n");
+		return;
+	}
 
 	//Remove
 	_set.erase(deletedIter);
 	
+	delete m;
+
 	//_mds remove
 	_mds->remove(socket);
-
-	printf("remove : %dcomplete\n", socket);
 }
 
 bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
@@ -208,7 +256,7 @@ bool DataStructure::isPossible(DataStructure::DSIterator inputIter)
 //개선은 가능하나 모양이 더러워진다!
 void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator> dsIterators)
 {
-	if(dsIterators.get() != NULL){
+	if(dsIterators.get() == NULL){
 		MLog::writeLog("sendAndRemove in DataStructure.cpp\n dsIterator is not 4\n");	
 	}
 
@@ -221,6 +269,7 @@ void DataStructure::sendAndRemove(boost::shared_array<DataStructure::DSIterator>
 		//Send@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 		printf("Send %d\n", targetSocket);	
 
+		close(targetSocket);
 
 		//Remove
 		_set.erase(targetIterator);
